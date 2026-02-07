@@ -28,8 +28,6 @@ os.environ["HUGGINGFACE_TOKENIZER"] = "nomic-ai/nomic-embed-text-v1.5"
 
 # Suppress HuggingFace warnings
 os.environ["TRANSFORMERS_TRUST_REMOTE_CODE"] = "true"
-if os.getenv("HF_TOKEN"):
-    os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
 
 import cognee_community_vector_adapter_qdrant.register
 import cognee
@@ -37,20 +35,26 @@ import asyncio
 import sys
 
 async def main():
-    # Clear old data (skip prune_system to avoid tokenizer issues during testing)
+    # Load papers metadata with error handling
+    try:
+        with open("papers_metadata.json") as f:
+            all_papers = json.load(f)
+        assert all_papers, "papers_metadata.json is empty"
+    except FileNotFoundError:
+        print("❌ papers_metadata.json not found. Run parse_metadata.py first.\n", flush=True)
+        sys.exit(1)
+    except (json.JSONDecodeError, AssertionError) as e:
+        print(f"❌ Error loading papers: {e}\n", flush=True)
+        sys.exit(1)
+
+    # Clear old data
     print("Clearing old cognee data...", flush=True)
     await cognee.prune.prune_data()
-    # Skip prune_system for now - causes tokenizer dependency issues
-    # await cognee.prune.prune_system(metadata=True)
     print("✓ Old data cleared\n", flush=True)
 
-    # Load papers metadata
-    with open("papers_metadata.json") as f:
-        all_papers = json.load(f)
-
-    # Testing with 10 papers first
-    papers = all_papers[:20]
-    print(f"Ingesting {len(papers)} papers (testing mode)...\n", flush=True)
+    # Select papers for ingestion
+    papers = all_papers[:2]
+    print(f"Ingesting {len(papers)} papers...\n", flush=True)
 
     # Add each paper to cognee
     for i, paper in enumerate(papers, 1):
@@ -72,7 +76,8 @@ Abstract:
 
     # Build knowledge graph
     print(f"\n✓ All {len(papers)} papers added", flush=True)
-    print("\nBuilding knowledge graph (this may take 10-15 minutes)...", flush=True)
+    est_time = "~30 seconds" if len(papers) <= 10 else f"~{len(papers)//2} minutes"
+    print(f"\nBuilding knowledge graph (estimated time: {est_time})...", flush=True)
     await cognee.cognify()
 
     print("\n" + "="*60, flush=True)
