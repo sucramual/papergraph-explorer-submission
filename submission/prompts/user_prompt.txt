@@ -1,0 +1,6 @@
+Context:
+{context}
+
+Question: {question}
+
+Please answer the question based on the context provided about academic papers and their relationships.
