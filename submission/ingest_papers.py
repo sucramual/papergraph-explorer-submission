@@ -33,6 +33,7 @@ import cognee_community_vector_adapter_qdrant.register
 import cognee
 import asyncio
 import sys
+from tqdm.asyncio import tqdm
 
 async def main():
     # Load papers metadata with error handling
@@ -56,8 +57,10 @@ async def main():
     papers = all_papers[:100]
     print(f"Ingesting {len(papers)} papers...\n", flush=True)
 
-    # Add each paper to cognee
-    for i, paper in enumerate(papers, 1):
+    # Add each paper to cognee with progress bar
+    progress_bar = tqdm(papers, desc="📄 Adding papers", unit="paper")
+
+    for paper in progress_bar:
         text = f"""
 Paper: {paper['title']}
 Authors: {', '.join(paper['authors'])}
@@ -69,10 +72,8 @@ Abstract:
 """
         await cognee.add(text, dataset_name="papers")
 
-        if i % 10 == 0:
-            print(f"Progress: {i}/{len(papers)} papers added", flush=True)
-        elif i == 1 or i == len(papers):
-            print(f"Added paper {i}: {paper['title'][:60]}...", flush=True)
+        # Update progress bar description with current paper
+        progress_bar.set_postfix_str(paper['title'][:50] + "...")
 
     # Build knowledge graph
     print(f"\n✓ All {len(papers)} papers added", flush=True)
