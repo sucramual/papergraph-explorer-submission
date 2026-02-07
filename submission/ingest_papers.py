@@ -17,7 +17,7 @@ os.environ["VECTOR_DB_KEY"] = os.getenv("QDRANT_API_KEY", "")
 os.environ["ENABLE_BACKEND_ACCESS_CONTROL"] = "false"
 
 os.environ["LLM_PROVIDER"] = "openai"
-os.environ["LLM_MODEL"] = "gpt-5-mini"
+os.environ["LLM_MODEL"] = "gpt-4o-mini"
 os.environ["LLM_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 os.environ["EMBEDDING_PROVIDER"] = "ollama"
@@ -25,6 +25,11 @@ os.environ["EMBEDDING_MODEL"] = "nomic-embed-text:latest"
 os.environ["EMBEDDING_ENDPOINT"] = "http://localhost:11434/api/embed"
 os.environ["EMBEDDING_DIMENSIONS"] = "768"
 os.environ["HUGGINGFACE_TOKENIZER"] = "nomic-ai/nomic-embed-text-v1.5"
+
+# Suppress HuggingFace warnings
+os.environ["TRANSFORMERS_TRUST_REMOTE_CODE"] = "true"
+if os.getenv("HF_TOKEN"):
+    os.environ["HF_TOKEN"] = os.getenv("HF_TOKEN")
 
 import cognee_community_vector_adapter_qdrant.register
 import cognee
