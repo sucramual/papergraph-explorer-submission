@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperGraph Explorer</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>📊 PaperGraph Explorer</h1>
+        <p>Interactive knowledge graph for academic papers</p>
+    </div>
+
+    <div class="container">
+        <div class="graph-container">
+            <div id="graph"></div>
+            <div class="graph-legend">
+                <span class="legend-item"><span class="legend-dot seed"></span> Seed Papers</span>
+                <span class="legend-item"><span class="legend-dot related"></span> Related Papers</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2 id="paper-title">Select a paper to explore...</h2>
+            </div>
+
+            <div id="paper-info" class="paper-info"></div>
+
+            <div class="query-section">
+                <label for="question">Ask a question:</label>
+                <input
+                    id="question"
+                    type="text"
+                    placeholder="e.g., What are the key contributions?"
+                    onkeypress="if(event.key==='Enter') askQuestion()"
+                />
+                <button onclick="askQuestion()">Ask</button>
+            </div>
+
+            <div id="answer-section" class="answer-section" style="display: none;">
+                <h3>Answer:</h3>
+                <div id="answer" class="answer"></div>
+            </div>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Thinking...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPaper = null;
+        let network = null;
+        let papers = {};
+
+        // Load and render graph
+        async function initGraph() {
+            try {
+                const response = await fetch('/api/graph');
+                const data = await response.json();
+
+                // Store paper IDs
+                data.nodes.forEach(node => {
+                    papers[node.id] = {
+                        id: node.id,
+                        title: node.title
+                    };
+                });
+
+                const container = document.getElementById('graph');
+                const options = {
+                    nodes: {
+                        shape: 'dot',
+                        font: {
+                            size: 12,
+                            color: '#333'
+                        },
+                        borderWidth: 2,
+                        borderWidthSelected: 4
+                    },
+                    edges: {
+                        arrows: 'to',
+                        smooth: {
+                            type: 'continuous'
+                        },
+                        color: {
+                            color: '#848484',
+                            highlight: '#4A90E2'
+                        }
+                    },
+                    physics: {
+                        stabilization: {
+                            iterations: 200
+                        },
+                        barnesHut: {
+                            gravitationalConstant: -2000,
+                            springConstant: 0.001,
+                            springLength: 200
+                        }
+                    },
+                    interaction: {
+                        hover: true,
+                        tooltipDelay: 200
+                    }
+                };
+
+                network = new vis.Network(container, data, options);
+
+                // Handle node click
+                network.on('click', function(params) {
+                    if (params.nodes.length > 0) {
+                        const paperId = params.nodes[0];
+                        loadPaperInfo(paperId);
+                    }
+                });
+
+                console.log(`Graph loaded: ${data.nodes.length} nodes, ${data.edges.length} edges`);
+            } catch (error) {
+                console.error('Error loading graph:', error);
+                document.getElementById('graph').innerHTML = '<p class="error">Error loading graph. Make sure the server is running.</p>';
+            }
+        }
+
+        // Load paper details
+        async function loadPaperInfo(paperId) {
+            selectedPaper = paperId;
+            document.getElementById('answer-section').style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/paper/${paperId}`);
+                const paper = await response.json();
+
+                if (paper.error) {
+                    document.getElementById('paper-title').textContent = 'Error loading paper';
+                    document.getElementById('paper-info').innerHTML = `<p class="error">${paper.error}</p>`;
+                    return;
+                }
+
+                document.getElementById('paper-title').textContent = paper.title;
+
+                const authors = paper.authors.slice(0, 5).join(', ') + (paper.authors.length > 5 ? ', et al.' : '');
+                const publishedDate = new Date(paper.published).toLocaleDateString();
+
+                document.getElementById('paper-info').innerHTML = `
+                    <p><strong>Authors:</strong> ${authors}</p>
+                    <p><strong>Published:</strong> ${publishedDate}</p>
+                    <p><strong>arXiv ID:</strong> <a href="https://arxiv.org/abs/${paper.id.split('v')[0]}" target="_blank">${paper.id}</a></p>
+                    <details>
+                        <summary><strong>Abstract</strong></summary>
+                        <p class="abstract">${paper.summary}</p>
+                    </details>
+                `;
+
+                // Focus question input
+                document.getElementById('question').focus();
+            } catch (error) {
+                console.error('Error loading paper:', error);
+                document.getElementById('paper-info').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Ask question about selected paper
+        async function askQuestion() {
+            if (!selectedPaper) {
+                alert('Please select a paper first!');
+                return;
+            }
+
+            const question = document.getElementById('question').value.trim();
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const answerSection = document.getElementById('answer-section');
+
+            loading.style.display = 'block';
+            answerSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        paper_id: selectedPaper,
+                        question: question
+                    })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('answer').textContent = data.answer;
+                answerSection.style.display = 'block';
+            } catch (error) {
+                console.error('Error querying:', error);
+                document.getElementById('answer').textContent = `Error: ${error.message}`;
+                answerSection.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Initialize on load
+        window.onload = initGraph;
+    </script>
+</body>
+</html>
