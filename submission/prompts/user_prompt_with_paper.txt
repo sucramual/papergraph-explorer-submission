@@ -1,0 +1,6 @@
+Additional Knowledge Graph Context (related entities and papers):
+{context}
+
+{question}
+
+Please provide a clear, helpful answer based on the paper information provided above and any relevant context from related papers or entities in the knowledge graph.

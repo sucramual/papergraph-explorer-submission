@@ -31,6 +31,16 @@ async def generate_completion_with_user_prompt(
     conversation_history: Optional[str] = None,
 ) -> str:
     """Generates a completion using LLM with given context and prompts."""
+    print(f"\n{'='*80}")
+    print("DEBUG: PROMPT BEING SENT TO LLM:")
+    print(f"{'='*80}")
+    print("SYSTEM PROMPT:")
+    print(system_prompt if system_prompt else f"(from file: {system_prompt_path})")
+    print(f"\n{'='*80}")
+    print("USER PROMPT:")
+    print(user_prompt[:1000])  # First 1000 chars
+    print(f"{'='*80}\n")
+
     return await generate_structured_completion_with_user_prompt(
         user_prompt=user_prompt,
         system_prompt_path=system_prompt_path,

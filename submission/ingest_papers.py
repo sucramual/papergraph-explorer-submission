@@ -17,7 +17,7 @@ os.environ["VECTOR_DB_KEY"] = os.getenv("QDRANT_API_KEY", "")
 os.environ["ENABLE_BACKEND_ACCESS_CONTROL"] = "false"
 
 os.environ["LLM_PROVIDER"] = "openai"
-os.environ["LLM_MODEL"] = "gpt-4o-mini"
+os.environ["LLM_MODEL"] = "gpt-5-mini"
 os.environ["LLM_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 os.environ["EMBEDDING_PROVIDER"] = "ollama"
@@ -44,7 +44,7 @@ async def main():
         all_papers = json.load(f)
 
     # Testing with 10 papers first
-    papers = all_papers[:10]  # Test with 10 papers
+    papers = all_papers[:20]
     print(f"Ingesting {len(papers)} papers (testing mode)...\n", flush=True)
 
     # Add each paper to cognee
