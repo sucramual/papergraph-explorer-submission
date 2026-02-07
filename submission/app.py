@@ -155,13 +155,14 @@ Abstract:
 When answering questions:
 - Be precise and cite specific information from the paper
 - Use academic language but remain accessible
-- If information is not provided, say so clearly"""
+- If information is not provided, say so clearly
+- Format your response in markdown for better readability (use **bold**, bullet points, etc.)"""
 
         user_prompt = f"""{paper_context}
 
 Question: {req.question}
 
-Please provide a clear, helpful answer based on the paper information above."""
+Please provide a clear, helpful answer in markdown format based on the paper information above."""
 
         response = await client.chat.completions.create(
             model="gpt-4o-mini",

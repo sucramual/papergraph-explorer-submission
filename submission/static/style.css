@@ -210,6 +210,55 @@ summary {
     color: #333;
 }
 
+/* Markdown styling for answer content */
+#answer p {
+    margin-bottom: 12px;
+}
+
+#answer strong {
+    color: #4A90E2;
+    font-weight: 600;
+}
+
+#answer ul, #answer ol {
+    margin-left: 20px;
+    margin-bottom: 12px;
+}
+
+#answer li {
+    margin-bottom: 6px;
+}
+
+#answer code {
+    background: #e8f0fe;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+#answer pre {
+    background: #e8f0fe;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 12px;
+}
+
+#answer blockquote {
+    border-left: 3px solid #4A90E2;
+    padding-left: 12px;
+    margin-left: 0;
+    color: #555;
+    font-style: italic;
+}
+
+#answer h1, #answer h2, #answer h3 {
+    color: #4A90E2;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
 .loading {
     text-align: center;
     padding: 20px;

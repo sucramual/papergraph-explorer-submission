@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PaperGraph Explorer</title>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -194,7 +195,8 @@
 
                 const data = await response.json();
 
-                document.getElementById('answer').textContent = data.answer;
+                // Render markdown to HTML
+                document.getElementById('answer').innerHTML = marked.parse(data.answer);
                 answerSection.style.display = 'block';
             } catch (error) {
                 console.error('Error querying:', error);
