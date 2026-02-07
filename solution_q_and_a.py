@@ -69,7 +69,7 @@ async def main():
     retriever = GraphCompletionRetrieverWithUserPrompt(
         user_prompt_filename="user_prompt.txt",
         system_prompt_path=str(system_prompt_path),
-        top_k=10,
+        top_k=20,
     )
 
     user_answers = []

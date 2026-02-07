@@ -62,7 +62,7 @@ async def get_graph():
         with open("papers_metadata.json") as f:
             all_papers = json.load(f)
 
-        papers = all_papers  # Use all papers (match ingestion count)
+        papers = all_papers[:10]  # Testing with 10 papers
 
         # Create nodes
         # First 20 papers = seed papers (highly relevant)

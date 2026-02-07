@@ -6,3 +6,4 @@ cognee-community-vector-adapter-qdrant
 openai
 qdrant-client
 aiofiles
+transformers

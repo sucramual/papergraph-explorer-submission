@@ -88,6 +88,14 @@ class GraphCompletionRetrieverWithUserPrompt(GraphCompletionRetriever):
 
         context_text = await resolve_edges_to_text(triplets)
 
+        # DEBUG: Print the context being used
+        print(f"\n{'='*80}")
+        print(f"QUERY: {query}")
+        print(f"{'='*80}")
+        print(f"CONTEXT RETRIEVED ({len(triplets)} triplets):")
+        print(context_text[:2000])  # First 2000 chars
+        print(f"{'='*80}\n")
+
         cache_config = CacheConfig()
         user = session_user.get()
         user_id = getattr(user, "id", None)
