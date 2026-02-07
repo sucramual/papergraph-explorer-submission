@@ -53,7 +53,7 @@ async def main():
     print("✓ Old data cleared\n", flush=True)
 
     # Select papers for ingestion
-    papers = all_papers[:2]
+    papers = all_papers[:100]
     print(f"Ingesting {len(papers)} papers...\n", flush=True)
 
     # Add each paper to cognee
