@@ -37,9 +37,9 @@ async def main():
     with open("papers_metadata.json") as f:
         all_papers = json.load(f)
 
-    # Limit to first 50 papers for faster demo
-    papers = all_papers[:50]
-    print(f"Ingesting {len(papers)} papers (limited from {len(all_papers)} total)...\n")
+    # Use all papers (can change to [:50] for faster demo)
+    papers = all_papers  # All 500 papers
+    print(f"Ingesting {len(papers)} papers...\n")
 
     # Add each paper to cognee
     for i, paper in enumerate(papers, 1):

@@ -62,24 +62,29 @@ async def get_graph():
         with open("papers_metadata.json") as f:
             all_papers = json.load(f)
 
-        papers = all_papers[:50]  # Use same 50 papers as ingestion
+        papers = all_papers  # Use all papers (match ingestion count)
 
         # Create nodes
+        # First 20 papers = seed papers (highly relevant)
+        # Rest = related papers
+        seed_count = min(20, len(papers) // 10)
         nodes = []
         for i, paper in enumerate(papers):
             node = {
                 "id": paper['id'],
-                "label": paper['title'][:40] + "..." if len(paper['title']) > 40 else paper['title'],
+                "label": paper['title'][:35] + "..." if len(paper['title']) > 35 else paper['title'],
                 "title": paper['title'],  # Tooltip
-                "color": "#4A90E2" if i < 10 else "#7B8D93",  # Blue for seed, gray for related
-                "size": 20 if i < 10 else 10
+                "color": "#4A90E2" if i < seed_count else "#7B8D93",  # Blue for seed, gray for related
+                "size": 20 if i < seed_count else 10
             }
             nodes.append(node)
 
-        # Create edges: seed papers (0-9) connect to related papers (10-49)
+        # Create edges: seed papers connect to related papers
+        # To avoid too many edges with 500 papers, connect each seed to ~10 related papers
         edges = []
-        for i in range(10):
-            for j in range(10, min(50, len(papers))):
+        related_per_seed = min(10, (len(papers) - seed_count) // seed_count) if seed_count > 0 else 0
+        for i in range(seed_count):
+            for j in range(seed_count, min(seed_count + (i+1) * related_per_seed, len(papers))):
                 edges.append({
                     "from": papers[i]['id'],
                     "to": papers[j]['id'],
