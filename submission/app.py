@@ -62,12 +62,12 @@ async def get_graph():
         with open("papers_metadata.json") as f:
             all_papers = json.load(f)
 
-        papers = all_papers[:10]  # Testing with 10 papers
+        papers = all_papers[:100]  # Show all 100 ingested papers
 
         # Create nodes
         # First 20 papers = seed papers (highly relevant)
         # Rest = related papers
-        seed_count = min(20, len(papers) // 10)
+        seed_count = min(20, len(papers) // 5)
         nodes = []
         for i, paper in enumerate(papers):
             node = {
