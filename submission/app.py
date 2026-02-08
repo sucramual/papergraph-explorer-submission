@@ -165,7 +165,8 @@ class QueryRequest(BaseModel):
 @app.post("/api/query")
 async def query_paper(req: QueryRequest):
     """
-    Answer question about a selected paper.
+    Answer question about a selected paper using Qdrant vector search.
+    Uses cognee's GraphCompletionRetriever to search Qdrant and retrieve relevant context.
     """
     try:
         # Load the specific paper from metadata
@@ -181,52 +182,63 @@ async def query_paper(req: QueryRequest):
         if not target_paper:
             return {"answer": "Paper not found in database."}
 
-        # Build comprehensive context from the paper metadata
-        paper_context = f"""
-Paper: {target_paper['title']}
-Authors: {', '.join(target_paper['authors'])}
-arXiv ID: {target_paper['id']}
-Published: {target_paper['published']}
+        # Use GraphCompletionRetriever to search Qdrant vector database
+        system_prompt_path = pathlib.Path("prompts/system_prompt.txt").resolve()
 
-Abstract:
-{target_paper['summary']}
-"""
-
-        # Simple approach: Use OpenAI directly with the paper context
-        from openai import AsyncOpenAI
-        client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        system_prompt = """You are an academic research assistant helping users understand research papers.
-
-When answering questions:
-- Be precise and cite specific information from the paper
-- Use academic language but remain accessible
-- If information is not provided, say so clearly
-- Format your response in markdown for better readability (use **bold**, bullet points, etc.)"""
-
-        user_prompt = f"""{paper_context}
-
-Question: {req.question}
-
-Please provide a clear, helpful answer in markdown format based on the paper information above."""
-
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500
+        retriever = GraphCompletionRetrieverWithUserPrompt(
+            user_prompt_filename="user_prompt.txt",
+            system_prompt_path=str(system_prompt_path),
+            top_k=10,  # Retrieve top 10 most relevant vectors from Qdrant
         )
 
-        return {"answer": response.choices[0].message.content}
+        # Build query with paper context
+        query = f"""
+Paper: {target_paper['title']}
+Authors: {', '.join(target_paper['authors'])}
+
+Question: {req.question}
+"""
+
+        # This uses Qdrant vector search to find relevant context
+        # Then uses OpenAI with that context to generate answer
+        completion = await retriever.get_completion(query=query)
+
+        return {
+            "answer": completion[0],
+            "method": "qdrant_vector_search"  # Flag showing we used Qdrant
+        }
 
     except Exception as e:
-        print(f"Error in query: {e}")
+        print(f"Error in query (falling back to simple approach): {e}")
         import traceback
         traceback.print_exc()
-        return {"answer": f"Error: {str(e)}"}
+
+        # Fallback: Use OpenAI directly if Qdrant retrieval fails
+        try:
+            paper_context = f"""
+Paper: {target_paper['title']}
+Authors: {', '.join(target_paper['authors'])}
+Abstract: {target_paper['summary']}
+"""
+            from openai import AsyncOpenAI
+            client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+            response = await client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an academic research assistant."},
+                    {"role": "user", "content": f"{paper_context}\n\nQuestion: {req.question}"}
+                ],
+                temperature=0.7,
+                max_tokens=500
+            )
+
+            return {
+                "answer": response.choices[0].message.content,
+                "method": "fallback_direct"
+            }
+        except Exception as e2:
+            return {"answer": f"Error: {str(e2)}", "method": "error"}
 
 if __name__ == "__main__":
     import uvicorn
