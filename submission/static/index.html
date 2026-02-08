@@ -60,8 +60,10 @@
 
     <script>
         let selectedPaper = null;
+        let selectedNode = null;
         let network = null;
         let papers = {};
+        let nodesDataset = null;
 
         // Load and render graph
         async function initGraph() {
@@ -78,6 +80,11 @@
                 });
 
                 const container = document.getElementById('graph');
+
+                // Create datasets for dynamic updates
+                nodesDataset = new vis.DataSet(data.nodes);
+                const edgesDataset = new vis.DataSet(data.edges);
+
                 const options = {
                     nodes: {
                         shape: 'dot',
@@ -114,12 +121,16 @@
                     }
                 };
 
-                network = new vis.Network(container, data, options);
+                network = new vis.Network(container, {
+                    nodes: nodesDataset,
+                    edges: edgesDataset
+                }, options);
 
                 // Handle node click
                 network.on('click', function(params) {
                     if (params.nodes.length > 0) {
                         const paperId = params.nodes[0];
+                        selectNode(paperId);
                         loadPaperInfo(paperId);
                     }
                 });
@@ -129,6 +140,39 @@
                 console.error('Error loading graph:', error);
                 document.getElementById('graph').innerHTML = '<p class="error">Error loading graph. Make sure the server is running.</p>';
             }
+        }
+
+        // Select node and change its color
+        function selectNode(paperId) {
+            // Reset previously selected node to original color
+            if (selectedNode) {
+                const prevNode = nodesDataset.get(selectedNode);
+                if (prevNode) {
+                    // Restore original color based on node type
+                    let originalColor = '#95A5A6'; // Default gray
+                    if (prevNode.id === '1706.03762') {
+                        originalColor = '#FF6B35'; // Orange for Attention paper
+                    } else if (prevNode.size >= 25) {
+                        originalColor = '#4A90E2'; // Blue for seed papers
+                    }
+
+                    nodesDataset.update({
+                        id: prevNode.id,
+                        color: originalColor,
+                        borderColor: prevNode.id === '1706.03762' ? '#FF6B35' :
+                                    (prevNode.size >= 25 ? '#2E86C1' : '#7F8C8D')
+                    });
+                }
+            }
+
+            // Highlight newly selected node
+            selectedNode = paperId;
+            nodesDataset.update({
+                id: paperId,
+                color: '#27AE60', // Green for selected
+                borderColor: '#229954',
+                borderWidth: 5
+            });
         }
 
         // Load paper details
