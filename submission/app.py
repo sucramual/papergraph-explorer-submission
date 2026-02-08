@@ -70,12 +70,17 @@ async def get_graph():
         seed_count = min(20, len(papers) // 5)
         nodes = []
         for i, paper in enumerate(papers):
+            # Highlight "Attention Is All You Need" paper (arXiv ID: 1706.03762)
+            is_attention_paper = paper['id'] == '1706.03762'
+
             node = {
                 "id": paper['id'],
                 "label": paper['title'][:35] + "..." if len(paper['title']) > 35 else paper['title'],
                 "title": paper['title'],  # Tooltip
-                "color": "#4A90E2" if i < seed_count else "#7B8D93",  # Blue for seed, gray for related
-                "size": 20 if i < seed_count else 10
+                "color": "#FF6B35" if is_attention_paper else ("#4A90E2" if i < seed_count else "#7B8D93"),  # Orange for Attention, Blue for seed, gray for related
+                "size": 30 if is_attention_paper else (20 if i < seed_count else 10),
+                "borderWidth": 3 if is_attention_paper else 1,
+                "borderColor": "#FF6B35" if is_attention_paper else None
             }
             nodes.append(node)
 
