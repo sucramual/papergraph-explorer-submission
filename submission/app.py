@@ -62,12 +62,13 @@ async def get_graph():
         with open("papers_metadata.json") as f:
             all_papers = json.load(f)
 
-        papers = all_papers[:100]  # Show all 100 ingested papers
+        papers = all_papers[:50]  # Show 50 papers for clean visualization
 
-        # Create nodes
-        # First 20 papers = seed papers (highly relevant)
-        # Rest = related papers
-        seed_count = min(20, len(papers) // 5)
+        # Create nodes with three-tier system:
+        # Tier 1: "Attention Is All You Need" (1 paper) - Orange, largest
+        # Tier 2: Seed papers (15 papers) - Blue, medium
+        # Tier 3: Related papers (34 papers) - Gray, small
+        seed_count = 15
         nodes = []
         for i, paper in enumerate(papers):
             # Highlight "Attention Is All You Need" paper (arXiv ID: 1706.03762)
@@ -75,12 +76,15 @@ async def get_graph():
 
             node = {
                 "id": paper['id'],
-                "label": paper['title'][:35] + "..." if len(paper['title']) > 35 else paper['title'],
+                "label": paper['title'][:40] + "..." if len(paper['title']) > 40 else paper['title'],
                 "title": paper['title'],  # Tooltip
-                "color": "#FF6B35" if is_attention_paper else ("#4A90E2" if i < seed_count else "#7B8D93"),  # Orange for Attention, Blue for seed, gray for related
-                "size": 30 if is_attention_paper else (20 if i < seed_count else 10),
-                "borderWidth": 3 if is_attention_paper else 1,
-                "borderColor": "#FF6B35" if is_attention_paper else None
+                # Three-tier color system
+                "color": "#FF6B35" if is_attention_paper else ("#4A90E2" if i < seed_count else "#95A5A6"),
+                # Three-tier size system
+                "size": 35 if is_attention_paper else (25 if i < seed_count else 15),
+                # Border styling
+                "borderWidth": 4 if is_attention_paper else (2 if i < seed_count else 1),
+                "borderColor": "#FF6B35" if is_attention_paper else ("#2E86C1" if i < seed_count else "#7F8C8D")
             }
             nodes.append(node)
 
