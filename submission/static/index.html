@@ -30,6 +30,11 @@
 
             <div id="paper-info" class="paper-info"></div>
 
+            <div id="related-papers" class="related-papers" style="display: none;">
+                <h3>🔗 Related Papers (<span id="related-count">0</span>)</h3>
+                <div id="related-list" class="related-list"></div>
+            </div>
+
             <div class="query-section">
                 <label for="question">Ask a question:</label>
                 <input
@@ -156,11 +161,51 @@
                     </details>
                 `;
 
+                // Load related papers
+                loadRelatedPapers(paperId);
+
                 // Focus question input
                 document.getElementById('question').focus();
             } catch (error) {
                 console.error('Error loading paper:', error);
                 document.getElementById('paper-info').innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Load related papers
+        async function loadRelatedPapers(paperId) {
+            try {
+                const response = await fetch(`/api/paper/${paperId}/related`);
+                const data = await response.json();
+
+                const relatedSection = document.getElementById('related-papers');
+                const relatedList = document.getElementById('related-list');
+                const relatedCount = document.getElementById('related-count');
+
+                if (data.count > 0) {
+                    relatedCount.textContent = data.count;
+
+                    let html = '';
+                    data.related_papers.forEach(relPaper => {
+                        const authors = relPaper.authors.join(', ');
+                        const year = new Date(relPaper.published).getFullYear();
+
+                        html += `
+                            <div class="related-paper-item" onclick="loadPaperInfo('${relPaper.id}')">
+                                <div class="related-paper-title">${relPaper.title}</div>
+                                <div class="related-paper-meta">${authors} (${year})</div>
+                            </div>
+                        `;
+                    });
+
+                    relatedList.innerHTML = html;
+                    relatedSection.style.display = 'block';
+                } else {
+                    relatedSection.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading related papers:', error);
+                document.getElementById('related-papers').style.display = 'none';
             }
         }
 

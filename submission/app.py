@@ -121,6 +121,43 @@ async def get_paper(paper_id: str):
     except Exception as e:
         return {"error": str(e)}
 
+@app.get("/api/paper/{paper_id}/related")
+async def get_related_papers(paper_id: str):
+    """Get papers related to a specific paper based on graph connections."""
+    try:
+        # Load all papers
+        with open("papers_metadata.json") as f:
+            all_papers = json.load(f)
+
+        # Get graph data to find connections
+        graph_data = await get_graph()
+
+        # Find papers connected to this one
+        related_ids = set()
+        for edge in graph_data["edges"]:
+            if edge["from"] == paper_id:
+                related_ids.add(edge["to"])
+            elif edge["to"] == paper_id:
+                related_ids.add(edge["from"])
+
+        # Get details for related papers
+        related_papers = []
+        papers_dict = {p['id']: p for p in all_papers}
+
+        for rel_id in related_ids:
+            if rel_id in papers_dict:
+                paper = papers_dict[rel_id]
+                related_papers.append({
+                    "id": paper['id'],
+                    "title": paper['title'],
+                    "authors": paper['authors'][:3],  # First 3 authors
+                    "published": paper['published']
+                })
+
+        return {"related_papers": related_papers, "count": len(related_papers)}
+    except Exception as e:
+        return {"error": str(e), "related_papers": [], "count": 0}
+
 class QueryRequest(BaseModel):
     paper_id: str
     question: str
